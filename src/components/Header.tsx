@@ -81,6 +81,9 @@ export function Header() {
                 </div>
               </div>
 
+              <Link href="/reviews" className="px-4 py-2 text-gray-700 font-medium hover:text-primary transition-colors">
+                Reviews
+              </Link>
               <Link href="/about" className="px-4 py-2 text-gray-700 font-medium hover:text-primary transition-colors">
                 About
               </Link>
@@ -150,6 +153,9 @@ export function Header() {
                 )}
               </div>
 
+              <Link href="/reviews" onClick={() => setMobileOpen(false)} className="block px-4 py-3 text-gray-700 font-medium hover:bg-gray-50 rounded-lg">
+                Reviews
+              </Link>
               <Link href="/about" onClick={() => setMobileOpen(false)} className="block px-4 py-3 text-gray-700 font-medium hover:bg-gray-50 rounded-lg">
                 About
               </Link>

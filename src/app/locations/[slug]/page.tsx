@@ -12,9 +12,14 @@ import {
   Hammer,
   ClipboardCheck,
   Clock,
+  Star,
+  AlertTriangle,
+  Info,
 } from "lucide-react";
 import { BUSINESS, SERVICES, LOCATIONS } from "@/lib/data";
 import { SchemaMarkup, BreadcrumbSchema } from "@/components/SchemaMarkup";
+import { LOCATION_CONTENT } from "@/lib/location-content";
+import { GOOGLE_REVIEWS, REVIEW_SUMMARY } from "@/lib/reviews";
 
 const SERVICE_ICONS: Record<string, React.ReactNode> = {
   Wrench: <Wrench className="w-7 h-7" />,
@@ -34,8 +39,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const location = LOCATIONS.find((l) => l.slug === slug);
   if (!location) return {};
   return {
-    title: `Plumber in ${location.fullName} | ${BUSINESS.name}`,
-    description: location.metaDescription,
+    title: `Plumber in ${location.fullName} | ${BUSINESS.name} | 24/7 Emergency Service`,
+    description: `Professional plumbing, sewer & drain services in ${location.fullName}. Licensed & insured. 20+ years experience. 24/7 emergency service. Call ${BUSINESS.phone} for a free estimate.`,
   };
 }
 
@@ -45,6 +50,8 @@ export default async function LocationPage({ params }: { params: Promise<{ slug:
   if (!location) notFound();
 
   const otherLocations = LOCATIONS.filter((l) => l.slug !== slug);
+  const content = LOCATION_CONTENT.find((c) => c.slug === slug);
+  const displayReviews = GOOGLE_REVIEWS.slice(0, 3);
 
   return (
     <>
@@ -74,11 +81,19 @@ export default async function LocationPage({ params }: { params: Promise<{ slug:
               Service Area
             </div>
             <h1 className="text-4xl md:text-5xl font-extrabold mb-6">
-              Plumbing Services in {location.fullName}
+              Plumber in {location.fullName} — Plumbing, Sewer & Drain Services
             </h1>
-            <p className="text-white/80 text-lg leading-relaxed mb-8">
+            <p className="text-white/80 text-lg leading-relaxed mb-6">
               {location.description}
             </p>
+            <div className="flex items-center gap-3 mb-8">
+              <div className="flex items-center gap-1">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="w-5 h-5 fill-accent text-accent" />
+                ))}
+              </div>
+              <span className="text-white/80 text-sm">{REVIEW_SUMMARY.google.rating}/5 from {REVIEW_SUMMARY.google.count} Google Reviews</span>
+            </div>
             <div className="flex flex-col sm:flex-row gap-4">
               <a
                 href={BUSINESS.phoneHref}
@@ -98,8 +113,66 @@ export default async function LocationPage({ params }: { params: Promise<{ slug:
         </div>
       </section>
 
+      {/* Expanded Content Sections */}
+      {content?.sections.map((section, idx) => (
+        <section key={idx} className={`py-16 ${idx % 2 === 0 ? "bg-white" : "bg-gray-50"}`}>
+          <div className="max-w-4xl mx-auto px-4">
+            <h2 className="text-3xl font-extrabold text-gray-900 mb-8">{section.title}</h2>
+            {section.content.map((paragraph, pIdx) => (
+              <p key={pIdx} className="text-gray-600 leading-relaxed mb-6 text-base">
+                {paragraph}
+              </p>
+            ))}
+          </div>
+        </section>
+      ))}
+
+      {/* Common Plumbing Issues */}
+      {content?.commonIssues && (
+        <section className="py-20 bg-gray-50">
+          <div className="max-w-7xl mx-auto px-4">
+            <h2 className="text-3xl font-extrabold text-gray-900 mb-4 text-center">
+              Common Plumbing Issues in {location.name}
+            </h2>
+            <p className="text-gray-500 text-center mb-12 max-w-2xl mx-auto">
+              As {location.name} plumbing experts, we see and solve these problems every day. Here are the issues we most commonly help property owners address.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {content.commonIssues.map((issue, idx) => (
+                <div key={idx} className="bg-white rounded-2xl p-6 border border-gray-100 hover:shadow-lg transition-shadow">
+                  <div className="w-10 h-10 rounded-lg bg-red-50 flex items-center justify-center mb-4">
+                    <AlertTriangle className="w-5 h-5 text-red-500" />
+                  </div>
+                  <h3 className="font-bold text-gray-900 mb-2">{issue.title}</h3>
+                  <p className="text-gray-500 text-sm leading-relaxed">{issue.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Local Facts */}
+      {content?.localFacts && (
+        <section className="py-16 bg-white">
+          <div className="max-w-4xl mx-auto px-4">
+            <h2 className="text-2xl font-extrabold text-gray-900 mb-8 text-center">
+              {location.name} Plumbing Facts You Should Know
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {content.localFacts.map((fact, idx) => (
+                <div key={idx} className="flex items-start gap-3 p-4 bg-blue-50 rounded-xl">
+                  <Info className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+                  <span className="text-gray-700 text-sm">{fact}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Services in this location */}
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4">
           <h2 className="text-3xl font-extrabold text-gray-900 mb-4 text-center">
             Our Services in {location.name}
@@ -112,7 +185,7 @@ export default async function LocationPage({ params }: { params: Promise<{ slug:
               <Link
                 key={service.slug}
                 href={`/locations/${location.slug}/${service.slug}`}
-                className="group bg-gray-50 hover:bg-primary rounded-2xl p-7 transition-all duration-300 hover:shadow-xl"
+                className="group bg-white hover:bg-primary rounded-2xl p-7 transition-all duration-300 hover:shadow-xl border border-gray-100"
               >
                 <div className="w-14 h-14 rounded-xl bg-primary/10 group-hover:bg-white/20 flex items-center justify-center text-primary group-hover:text-white transition-colors mb-4">
                   {SERVICE_ICONS[service.icon]}
@@ -132,6 +205,45 @@ export default async function LocationPage({ params }: { params: Promise<{ slug:
         </div>
       </section>
 
+      {/* Customer Reviews */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-extrabold text-gray-900 mb-4">What {location.name} Customers Say</h2>
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <div className="flex items-center gap-1">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                ))}
+              </div>
+              <span className="text-gray-700 font-semibold">{REVIEW_SUMMARY.google.rating}/5</span>
+            </div>
+            <p className="text-gray-500 text-sm">Based on {REVIEW_SUMMARY.google.count} Google Reviews</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {displayReviews.map((review, idx) => (
+              <div key={idx} className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
+                <div className="flex items-center gap-1 mb-3">
+                  {[...Array(review.rating)].map((_, i) => (
+                    <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                  ))}
+                </div>
+                <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-5">&ldquo;{review.text}&rdquo;</p>
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-gray-900 text-sm">{review.author}</span>
+                  <span className="text-gray-400 text-xs">{review.relativeTime}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="text-center mt-8">
+            <Link href="/reviews" className="inline-flex items-center gap-2 text-primary font-semibold hover:underline">
+              Read All Reviews <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* Why Choose Us */}
       <section className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4">
@@ -146,11 +258,13 @@ export default async function LocationPage({ params }: { params: Promise<{ slug:
               <div className="space-y-4">
                 {[
                   "Fast response times to " + location.name,
-                  "Knowledge of local plumbing codes",
-                  "24/7 emergency availability",
-                  "Licensed and insured professionals",
-                  "Competitive pricing with free estimates",
+                  "Deep knowledge of " + location.name + " plumbing codes and infrastructure",
+                  "24/7 emergency availability — including holidays",
+                  "Licensed, bonded, and fully insured professionals",
+                  "Upfront pricing with free estimates — no surprises",
+                  "Over 20 years experience in Chicagoland plumbing",
                   "Satisfaction guaranteed on every job",
+                  "Locally owned and operated — based in Chicago",
                 ].map((item) => (
                   <div key={item} className="flex items-center gap-3">
                     <CheckCircle className="w-5 h-5 text-primary shrink-0" />
@@ -184,6 +298,12 @@ export default async function LocationPage({ params }: { params: Promise<{ slug:
                   </div>
                 </div>
               </div>
+              <div className="mt-6 p-4 bg-gray-50 rounded-xl">
+                <p className="text-xs text-gray-500">
+                  <strong className="text-gray-700">Zip codes served in {location.name}:</strong>{" "}
+                  {location.zipCodes.join(", ")}
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -195,6 +315,9 @@ export default async function LocationPage({ params }: { params: Promise<{ slug:
           <h2 className="text-2xl font-extrabold text-gray-900 mb-6 text-center">
             Also Serving Nearby Areas
           </h2>
+          <p className="text-gray-500 text-center mb-8 max-w-xl mx-auto">
+            In addition to {location.name}, our service vehicles regularly cover these nearby communities with the same fast response times.
+          </p>
           <div className="flex flex-wrap justify-center gap-3 mb-10">
             {location.nearbyAreas.map((area) => (
               <span key={area} className="px-4 py-2 bg-gray-100 rounded-full text-sm text-gray-600 font-medium">
@@ -223,14 +346,22 @@ export default async function LocationPage({ params }: { params: Promise<{ slug:
           <h2 className="text-3xl font-extrabold mb-4">
             Need a Plumber in {location.name}?
           </h2>
-          <p className="text-white/70 mb-8">Fast, reliable plumbing service for your home or business.</p>
-          <a
-            href={BUSINESS.phoneHref}
-            className="inline-flex items-center gap-2 bg-accent hover:bg-accent-dark text-dark font-bold px-10 py-4 rounded-xl transition-all text-lg"
-          >
-            <Phone className="w-5 h-5" />
-            {BUSINESS.phone}
-          </a>
+          <p className="text-white/70 mb-8">Fast, reliable plumbing service for your home or business. 24/7 emergency availability. Free estimates.</p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <a
+              href={BUSINESS.phoneHref}
+              className="inline-flex items-center gap-2 bg-accent hover:bg-accent-dark text-dark font-bold px-10 py-4 rounded-xl transition-all text-lg"
+            >
+              <Phone className="w-5 h-5" />
+              {BUSINESS.phone}
+            </a>
+            <Link
+              href="/contact"
+              className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white font-semibold px-10 py-4 rounded-xl transition-all border border-white/20"
+            >
+              Request Free Estimate
+            </Link>
+          </div>
         </div>
       </section>
     </>
